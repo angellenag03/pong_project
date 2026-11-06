@@ -6,7 +6,16 @@ import java.awt.*;
 public class Main {
     public static void main(String[] args) {
 
-        JFrame f = new JFrame("Frontenis");
+        javax.swing.SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+                createAndShowGUI();
+            }
+        });
+
+    }
+
+    private static void createAndShowGUI() {
+        JFrame f = new JFrame("Pong");
 
         f.setResizable(false);
 

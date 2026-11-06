@@ -13,9 +13,12 @@ public class Board extends JComponent implements Runnable, KeyListener {
     private Paddle paddle;
 
     private BallRunner ballRunner;
+    private boolean isPaused = false;
+
     public Board() {
         setOpaque(true);
-        setBorder(BorderFactory.createMatteBorder(5, 5, 5, 5, Color.BLACK));
+        setBorder(BorderFactory.createMatteBorder(5, 5,
+                5, 5, Color.BLACK));
         ball = new Ellipse2D.Double(20,320,20,20);
 
         paddle = new Paddle();
@@ -32,6 +35,11 @@ public class Board extends JComponent implements Runnable, KeyListener {
             g.setColor( getBackground() );
             g.fillRect(0, 0, getWidth(), getHeight());
             g.setColor(getForeground());
+        }
+
+        if( isPaused ) {
+            g.setColor( Color.GREEN );
+            g.drawString("Paused", 20, 30);
         }
 
         Graphics2D g2 = (Graphics2D) g;
@@ -78,15 +86,22 @@ public class Board extends JComponent implements Runnable, KeyListener {
     public void keyPressed(KeyEvent e) {
         switch ( e.getKeyCode() ) {
             case KeyEvent.VK_LEFT:
-                paddle.moveLeft();
+                if( !isPaused) {
+                    paddle.moveLeft();
+                }
                 break;
             case KeyEvent.VK_RIGHT:
-                paddle.moveRight();
+                if( !isPaused) {
+                    paddle.moveRight();;
+                }
+
                 break;
             case KeyEvent.VK_SPACE:
+                isPaused = true;
                 ballRunner.pause();
                 break;
             case KeyEvent.VK_R:
+                isPaused = false;
                 ballRunner.resume();
                 break;
         }

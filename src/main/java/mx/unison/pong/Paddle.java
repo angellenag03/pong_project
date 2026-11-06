@@ -13,19 +13,18 @@ public class Paddle {
 
     public Paddle() {
         super();
-        pos = 4;
+        pos = 4; // raqueta inicia al centro
         paddle = new Rectangle2D.Double(xPositions[pos],450,WIDTH,HEIGHT);
-
     }
 
-    public void moveRight() {
+    public synchronized void moveRight() {
         if( pos < 7 ) {
             pos++;
             paddle.x = xPositions[pos];
         }
     }
 
-    public void moveLeft() {
+    public synchronized void moveLeft() {
         if( pos > 0 ) {
             pos--;
             paddle.x = xPositions[pos];
@@ -42,10 +41,10 @@ public class Paddle {
         return paddle.contains(x,y);
     }
 
-    public boolean instersects(RectangularShape shape) {
+    public boolean intersects(RectangularShape shape) {
         boolean result = false;
 
-        result = paddle.intersects(shape.getBounds2D());
+        result = paddle.intersects( shape.getBounds2D() );
 
         return result;
     }

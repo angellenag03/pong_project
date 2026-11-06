@@ -47,13 +47,13 @@ public class BallRunner implements Runnable {
 
             if( isPaused ) {
                Thread.yield();
-                continue;
+               continue;
             }
 
             int y = (int) ball.getMaxY();
             int x = (int)  ball.getX();
 
-            if( paddle.instersects(ball) ) {
+            if( paddle.intersects(ball) ) {
                 directionY = directionY * SIGN;
                // sX = sX * SIGN;
                 ballX = ballX + (DX * directionX) ;
