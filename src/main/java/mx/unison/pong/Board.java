@@ -1,0 +1,100 @@
+package mx.unison.pong;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.awt.geom.Ellipse2D;
+
+public class Board extends JComponent implements Runnable, KeyListener {
+    private Dimension preferredSize = null;
+    private Ellipse2D.Double ball;
+
+    private Paddle paddle;
+
+    private BallRunner ballRunner;
+    public Board() {
+        setOpaque(true);
+        setBorder(BorderFactory.createMatteBorder(5, 5, 5, 5, Color.BLACK));
+        ball = new Ellipse2D.Double(20,320,20,20);
+
+        paddle = new Paddle();
+        ballRunner = new BallRunner(ball,paddle);
+        Thread t1 = new Thread(ballRunner);
+        t1.start();
+        Thread t2 = new Thread( this);
+        t2.start();
+    }
+
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        if (isOpaque()) {
+            g.setColor( getBackground() );
+            g.fillRect(0, 0, getWidth(), getHeight());
+            g.setColor(getForeground());
+        }
+
+        Graphics2D g2 = (Graphics2D) g;
+
+        g2.setStroke(new BasicStroke(5.0f));
+
+        g2.setColor(Color.RED);
+        g2.fill(ball);
+        g2.setColor(Color.BLACK);
+        g2.fill(paddle.getPaddle());
+    }
+
+    public Dimension getPreferredSize() {
+        if (preferredSize == null) {
+            return new Dimension(640, 480);
+        } else {
+            return super.getPreferredSize();
+        }
+    }
+
+    public void setPreferredSize(Dimension newPrefSize) {
+        preferredSize = newPrefSize;
+        super.setPreferredSize(newPrefSize);
+    }
+
+    @Override
+    public void run() {
+        while ( true ) {
+            repaint();
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
+    @Override
+    public void keyTyped(KeyEvent e) {
+
+    }
+
+    @Override
+    public void keyPressed(KeyEvent e) {
+        switch ( e.getKeyCode() ) {
+            case KeyEvent.VK_LEFT:
+                paddle.moveLeft();
+                break;
+            case KeyEvent.VK_RIGHT:
+                paddle.moveRight();
+                break;
+            case KeyEvent.VK_SPACE:
+                ballRunner.pause();
+                break;
+            case KeyEvent.VK_R:
+                ballRunner.resume();
+                break;
+        }
+       // System.out.println("K");
+    }
+
+    @Override
+    public void keyReleased(KeyEvent e) {
+
+    }
+}
