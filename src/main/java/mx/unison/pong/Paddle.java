@@ -8,8 +8,8 @@ public class Paddle {
     public static final int HEIGHT = 30;
 
     private final int[] xPositions = { 0,80,160,240,320,400,480,560};
-    private Rectangle2D.Double paddle;
-    private int pos = 0;
+    private final Rectangle2D.Double paddle;
+    private int pos ;
 
     public Paddle() {
         super();
@@ -41,8 +41,9 @@ public class Paddle {
         return paddle.contains(x,y);
     }
 
+    // verifica si la pelota toco la raqueta
     public boolean intersects(RectangularShape shape) {
-        boolean result = false;
+        boolean result;
 
         result = paddle.intersects( shape.getBounds2D() );
 

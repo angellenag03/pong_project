@@ -8,20 +8,21 @@ public class BallRunner implements Runnable {
     public static final int MAX_Y = 480;
     public static final int SIGN = -1;
 
-    public static final int DX = 10;
-    public static final int DY = 10;
-    private Ellipse2D.Double ball;
+    public static final int DX = 20;
+    public static final int DY = 20;
+    private final  Ellipse2D.Double ball;
 
-    private Paddle paddle;
+    private final Paddle paddle;
 
     private int ballX;
     private int ballY;
 
     private boolean isPaused ;
+    private boolean stop = false ;
 
     public BallRunner( Ellipse2D.Double shape, Paddle p) {
         super();
-        ball = ( Ellipse2D.Double) shape;
+        ball =  shape;
         paddle = p;
         ballX = 320;
         ballY = 240;
@@ -43,15 +44,15 @@ public class BallRunner implements Runnable {
         int directionY = 1;
         int directionX = 1;
 
-        while( true ) {
+        while( !stop ) {
 
             if( isPaused ) {
                Thread.yield();
                continue;
             }
 
-            int y = (int) ball.getMaxY();
-            int x = (int)  ball.getX();
+           // int y = (int) ball.getMaxY();
+           // int x = (int)  ball.getX();
 
             if( paddle.intersects(ball) ) {
                 directionY = directionY * SIGN;
@@ -87,6 +88,10 @@ public class BallRunner implements Runnable {
                 throw new RuntimeException(e);
             }
         }
-
     }
+
+    public void stop() {
+        stop = true;
+    }
+
 }

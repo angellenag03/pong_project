@@ -15,6 +15,8 @@ public class Board extends JComponent implements Runnable, KeyListener {
     private BallRunner ballRunner;
     private boolean isPaused = false;
 
+    private final Font theFont = new Font("SansSerif", Font.BOLD, 24);
+
     public Board() {
         setOpaque(true);
         setBorder(BorderFactory.createMatteBorder(5, 5,
@@ -29,8 +31,9 @@ public class Board extends JComponent implements Runnable, KeyListener {
         t2.start();
     }
 
-    protected void paintComponent(Graphics g) {
-        super.paintComponent(g);
+    protected void paintComponent(Graphics graphicsContext) {
+        super.paintComponent(graphicsContext);
+        Graphics2D g = (Graphics2D) graphicsContext;
         if (isOpaque()) {
             g.setColor( getBackground() );
             g.fillRect(0, 0, getWidth(), getHeight());
@@ -38,18 +41,17 @@ public class Board extends JComponent implements Runnable, KeyListener {
         }
 
         if( isPaused ) {
-            g.setColor( Color.GREEN );
+            g.setFont(theFont);
+            g.setColor( Color.BLUE );
             g.drawString("Paused", 20, 30);
         }
 
-        Graphics2D g2 = (Graphics2D) g;
+        g.setStroke(new BasicStroke(5.0f));
 
-        g2.setStroke(new BasicStroke(5.0f));
-
-        g2.setColor(Color.RED);
-        g2.fill(ball);
-        g2.setColor(Color.BLACK);
-        g2.fill(paddle.getPaddle());
+        g.setColor(Color.RED);
+        g.fill(ball);
+        g.setColor(Color.BLACK);
+        g.fill(paddle.getPaddle());
     }
 
     public Dimension getPreferredSize() {
@@ -94,7 +96,6 @@ public class Board extends JComponent implements Runnable, KeyListener {
                 if( !isPaused) {
                     paddle.moveRight();;
                 }
-
                 break;
             case KeyEvent.VK_SPACE:
                 isPaused = true;
