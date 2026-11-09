@@ -166,14 +166,10 @@ public class SFXManager {
     }
     
     private String getRandomSoundFile(String soundType) {
-        int variant = random.nextInt(4);
+        int variant = random.nextInt(2);
         
         switch(soundType.toLowerCase()) {
-            case "delete": return "delete" + variant + ".wav";
-            case "grab": return "grab" + variant + ".wav";
-            case "put": return "put" + variant + ".wav";
-            case "hover": return "hover.wav";  // Añadir directamente hover.wav
-            case "click": return "click.wav";  // Añadir directamente click.wav
+            case "hit": return "hit" + variant + ".wav";
             default: return soundType;
         }
     }

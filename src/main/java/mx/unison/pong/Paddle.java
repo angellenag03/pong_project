@@ -17,7 +17,7 @@ public class Paddle {
 
     private final Rectangle2D.Double paddle;
     private double baseSpeed = 8.0;
-    private double sprintSpeed = 14.0;
+    private double sprintSpeed = 16.0;
 
     // --- Atributos para la Textura ---
     private BufferedImage textureSheet;

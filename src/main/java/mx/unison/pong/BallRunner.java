@@ -1,12 +1,17 @@
 package mx.unison.pong;
 
+import java.awt.AlphaComposite;
+import java.awt.Composite;
 import java.awt.Graphics2D;
 import java.awt.Image;
+import java.awt.Point;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
+import java.util.LinkedList;
 import javax.imageio.ImageIO;
 import javax.swing.JOptionPane;
+import sfx.SFXManager;
 
 public class BallRunner implements Runnable {
 
@@ -33,6 +38,11 @@ public class BallRunner implements Runnable {
     private BufferedImage spriteSheet;
     private Image sprite;
 
+    private final SFXManager sfx = SFXManager.getInstance();
+    // --- Control de Estela ---
+    private final LinkedList<Point> trail = new LinkedList<>();
+    private static final int MAX_TRAIL_SIZE = 6;
+
     public BallRunner(Ellipse2D.Double shape, Paddle p) {
         super();
         this.ball = shape;
@@ -44,19 +54,14 @@ public class BallRunner implements Runnable {
     }
 
     public void resetPosition() {
-        // Se coloca la bola más abajo (Y = 380, justo por encima de la pala que está en Y = 450)
         this.ballX = 320;
-        this.ballY = 380; 
+        this.ballY = 380;
         this.ball.x = ballX;
         this.ball.y = ballY;
-
-        // Sentido horizontal inicial (puede ser 1 o -1 según prefieras)
-        this.directionX = 1; 
-
-        // -1 hace que el desplazamiento DY vaya restando posición en Y (movimiento hacia arriba)
-        this.directionY = -1; 
-        
+        this.directionX = 1;
+        this.directionY = -1;
         this.gameOver = false;
+        this.trail.clear();
     }
 
     private void loadSprite() {
@@ -70,6 +75,25 @@ public class BallRunner implements Runnable {
     }
 
     public void paint(Graphics2D g2d) {
+        Composite originalComposite = g2d.getComposite();
+
+        // 1. Dibujar la estela (posiciones anteriores con alpha decreciente)
+        for (int i = 0; i < trail.size(); i++) {
+            Point p = trail.get(i);
+            float alpha = (float) (i + 1) / (trail.size() + 2); // Transparencia progresiva
+            g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha * 0.5f));
+
+            if (sprite != null) {
+                g2d.drawImage(sprite, p.x, p.y, (int) ball.width, (int) ball.height, null);
+            } else {
+                g2d.fillOval(p.x, p.y, (int) ball.width, (int) ball.height);
+            }
+        }
+
+        // Restaurar opacidad original para la bola principal
+        g2d.setComposite(originalComposite);
+
+        // 2. Dibujar la bola actual
         if (sprite != null) {
             g2d.drawImage(sprite, ballX, ballY, (int) ball.width, (int) ball.height, null);
         } else {
@@ -126,24 +150,33 @@ public class BallRunner implements Runnable {
                 continue;
             }
 
+            // Registrar posición actual en la estela antes de mover
+            trail.add(new Point(ballX, ballY));
+            if (trail.size() > MAX_TRAIL_SIZE) {
+                trail.removeFirst();
+            }
+
             if (paddle.intersects(ball)) {
                 directionY = directionY * SIGN;
                 ballX = ballX + (DX * directionX);
                 ballY = ballY + (DY * directionY);
                 ball.x = ballX;
                 ball.y = ballY;
+                
+            sfx.playSound("hit");
                 continue;
             }
 
             if (ball.getMinY() < 0) {
                 directionY = directionY * SIGN;
+                sfx.playSound("hit");
             }
 
             if (ball.getMinX() < 0) {
                 directionX = directionX * SIGN;
+                sfx.playSound("hit");
             }
             
-            // Si la bola toca o supera el límite inferior (suelo), es Game Over
             if (ball.getMaxY() >= MAX_Y) {
                 gameOver = true;
                 continue;
@@ -151,6 +184,7 @@ public class BallRunner implements Runnable {
 
             if (ball.getMaxX() > MAX_X) {
                 directionX = directionX * SIGN;
+                sfx.playSound("hit");
             }
 
             ballX = ballX + (DX * directionX);

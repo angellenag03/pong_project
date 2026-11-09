@@ -18,6 +18,10 @@ public class Board extends JComponent implements Runnable, KeyListener {
     private BallRunner ballRunner;
     private List<Brick> bricks;
 
+    // --- Campo de Estrellas ---
+    private List<Star> stars;
+    private static final int STAR_COUNT = 40;
+
     private boolean isPaused = false;
     private boolean isGameOver = false;
     private int score = 0;
@@ -28,7 +32,6 @@ public class Board extends JComponent implements Runnable, KeyListener {
     private boolean rightPressed = false;
     private boolean shiftPressed = false;
 
-    // --- Fuentes del Juego ---
     private Font customFont;
     private Font theFont;
     private Font subFont;
@@ -38,7 +41,6 @@ public class Board extends JComponent implements Runnable, KeyListener {
         setOpaque(true);
         setBorder(BorderFactory.createMatteBorder(5, 5, 5, 5, Color.BLACK));
         
-        // Cargar fuente personalizada
         loadCustomFont();
 
         ball = new Ellipse2D.Double(320, 300, 20, 20);
@@ -46,6 +48,7 @@ public class Board extends JComponent implements Runnable, KeyListener {
         ballRunner = new BallRunner(ball, paddle);
 
         initBricks();
+        initStars();
 
         Thread t1 = new Thread(ballRunner);
         t1.start();
@@ -53,24 +56,25 @@ public class Board extends JComponent implements Runnable, KeyListener {
         t2.start();
     }
 
+    private void initStars() {
+        stars = new ArrayList<>();
+        for (int i = 0; i < STAR_COUNT; i++) {
+            stars.add(new Star());
+        }
+    }
+
     private void loadCustomFont() {
         try {
-            // Carga la fuente TTF desde la carpeta de recursos
             InputStream fontStream = ClassLoader.getSystemResourceAsStream("font/ROGLyonsTypeRegular3.ttf");
             if (fontStream != null) {
                 customFont = Font.createFont(Font.TRUETYPE_FONT, fontStream);
-                
-                // Deriva los tamaños deseados para cada contexto
                 theFont = customFont.deriveFont(Font.BOLD, 28f);
                 subFont = customFont.deriveFont(Font.PLAIN, 18f);
                 scoreFont = customFont.deriveFont(Font.BOLD, 18f);
             } else {
-                System.err.println("No se encontró el archivo de fuente ROG LyonsType.");
                 useFallbackFonts();
             }
         } catch (Exception e) {
-            System.err.println("Error al cargar la fuente: " + e.getMessage());
-            e.printStackTrace();
             useFallbackFonts();
         }
     }
@@ -84,13 +88,12 @@ public class Board extends JComponent implements Runnable, KeyListener {
     private void initBricks() {
         bricks = new ArrayList<>();
         
-        // Paleta de la imagen desaturada para contraste en fondo negro
         Color[] rowColors = {
             new Color(0xD8, 0xD4, 0xF8),
             new Color(0xB5, 0xC8, 0xF0),
             new Color(0x9E, 0xA3, 0xB0),
-            new Color(0xC5, 0xC3, 0xC7), 
-            new Color(0x4A, 0x4F, 0x60)  
+            new Color(0xC5, 0xC3, 0xC7),
+            new Color(0x4A, 0x4F, 0x60)
         };
 
         int rows = 5;
@@ -104,7 +107,7 @@ public class Board extends JComponent implements Runnable, KeyListener {
             for (int c = 0; c < cols; c++) {
                 double x = startX + c * (Brick.WIDTH + padding);
                 double y = startY + r * (Brick.HEIGHT + padding);
-                bricks.add(new Brick(x, y, rowColor));
+                bricks.add(new Brick(x, y, new Color(0x4A, 0x4F, 0x60)));
             }
         }
     }
@@ -128,30 +131,37 @@ public class Board extends JComponent implements Runnable, KeyListener {
         g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
         g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
 
-        // Fondo Negro
+        // 1. Fondo Negro
         if (isOpaque()) {
             g.setColor(Color.BLACK);
             g.fillRect(0, 0, getWidth(), getHeight());
             g.setColor(getForeground());
         }
 
+        // 2. Renderizar Estrellas (en el fondo)
+        for (Star star : stars) {
+            star.paint(g);
+        }
+
+        // Restaurar estado de renderizado para elementos del juego
+        g.setComposite(AlphaComposite.SrcOver);
         g.setStroke(new BasicStroke(5.0f));
 
-        // 1. Renderizar bloques activos
+        // 3. Renderizar bloques activos
         for (Brick brick : bricks) {
             brick.paint(g);
         }
 
-        // 2. Renderizar la bola y el paddle
+        // 4. Renderizar la bola (con su estela) y el paddle
         ballRunner.paint(g);
         paddle.paint(g);
 
-        // 3. Renderizar el Score con ROG Fonts
+        // 5. Renderizar el Score
         g.setFont(scoreFont);
         g.setColor(Color.WHITE);
         g.drawString("Score: " + score, 15, 25);
 
-        // 4. Renderizar texto de Pausa o Game Over centrado
+        // 6. Textos de Pausa o Game Over
         if (isGameOver) {
             g.setColor(Color.RED);
             g.setFont(theFont);
@@ -200,6 +210,11 @@ public class Board extends JComponent implements Runnable, KeyListener {
     }
 
     private void updateGame() {
+        // Las estrellas se mueven siempre (incluso en pausa/game over para darle vida al fondo)
+        for (Star star : stars) {
+            star.update();
+        }
+
         if (ballRunner.isGameOver()) {
             isGameOver = true;
         }
