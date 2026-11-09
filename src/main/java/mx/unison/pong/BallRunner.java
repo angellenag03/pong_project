@@ -19,8 +19,9 @@ public class BallRunner implements Runnable {
     public static final int MAX_Y = 480;
     public static final int SIGN = -1;
 
-    public static final int DX = 8;
-    public static final int DY = 8;
+    // Velocidad base por defecto (en lugar de constantes fijas final)
+    private int speedX = 8;
+    private int speedY = 8;
     
     private final Ellipse2D.Double ball;
     private final Paddle paddle;
@@ -39,7 +40,6 @@ public class BallRunner implements Runnable {
     private Image sprite;
 
     private final SFXManager sfx = SFXManager.getInstance();
-    // --- Control de Estela ---
     private final LinkedList<Point> trail = new LinkedList<>();
     private static final int MAX_TRAIL_SIZE = 6;
 
@@ -64,6 +64,18 @@ public class BallRunner implements Runnable {
         this.trail.clear();
     }
 
+    // Reinicia la velocidad de la bola al valor inicial (al perder la partida)
+    public void resetSpeed() {
+        this.speedX = 8;
+        this.speedY = 8;
+    }
+
+    // Aumenta un poco la velocidad de la bola para el siguiente nivel
+    public void increaseSpeed() {
+        this.speedX += 1;
+        this.speedY += 1;
+    }
+
     private void loadSprite() {
         try {
             spriteSheet = ImageIO.read(ClassLoader.getSystemResourceAsStream("ball.png"));
@@ -77,10 +89,9 @@ public class BallRunner implements Runnable {
     public void paint(Graphics2D g2d) {
         Composite originalComposite = g2d.getComposite();
 
-        // 1. Dibujar la estela (posiciones anteriores con alpha decreciente)
         for (int i = 0; i < trail.size(); i++) {
             Point p = trail.get(i);
-            float alpha = (float) (i + 1) / (trail.size() + 2); // Transparencia progresiva
+            float alpha = (float) (i + 1) / (trail.size() + 2);
             g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha * 0.5f));
 
             if (sprite != null) {
@@ -90,10 +101,8 @@ public class BallRunner implements Runnable {
             }
         }
 
-        // Restaurar opacidad original para la bola principal
         g2d.setComposite(originalComposite);
 
-        // 2. Dibujar la bola actual
         if (sprite != null) {
             g2d.drawImage(sprite, ballX, ballY, (int) ball.width, (int) ball.height, null);
         } else {
@@ -141,6 +150,35 @@ public class BallRunner implements Runnable {
         return gameOver;
     }
 
+    /**
+     * Aplica el efecto de cámara lenta reduciendo temporalmente la velocidad de la bola.
+     * 
+     * @param durationMs Duración del efecto en milisegundos.
+     */
+    public void applySlowTime(long durationMs) {
+        new Thread(() -> {
+            try {
+                // Guarda la velocidad previa
+                int originalDX = this.speedX;
+                int originalDY = this.speedY;
+
+                // Reduce la velocidad a la mitad (mínimo 3 px/frame para no congelarla)
+                this.speedX = Math.max(3, this.speedX / 2);
+                this.speedY = Math.max(3, this.speedY / 2);
+
+                Thread.sleep(durationMs);
+
+                // Restaura la velocidad original
+                this.speedX = originalDX;
+                this.speedY = originalDY;
+            } catch (InterruptedException ignored) {}
+        }).start();
+    }
+    
+    public Ellipse2D.Double getBall() {
+        return ball;
+    }
+    
     @Override
     public void run() {
         while (!stop) {
@@ -150,7 +188,6 @@ public class BallRunner implements Runnable {
                 continue;
             }
 
-            // Registrar posición actual en la estela antes de mover
             trail.add(new Point(ballX, ballY));
             if (trail.size() > MAX_TRAIL_SIZE) {
                 trail.removeFirst();
@@ -158,23 +195,27 @@ public class BallRunner implements Runnable {
 
             if (paddle.intersects(ball)) {
                 directionY = directionY * SIGN;
-                ballX = ballX + (DX * directionX);
-                ballY = ballY + (DY * directionY);
+                ballX = ballX + (speedX * directionX);
+                ballY = ballY + (speedY * directionY);
                 ball.x = ballX;
                 ball.y = ballY;
                 
-            sfx.playSound("hit");
+                sfx.playSound("hit");
                 continue;
             }
 
             if (ball.getMinY() < 0) {
+                sfx.playSound("hit");                
                 directionY = directionY * SIGN;
-                sfx.playSound("hit");
+                ballY = 0; // <-- Ajustar posición para despegarla del techo
+                ball.y = ballY;
             }
 
             if (ball.getMinX() < 0) {
-                directionX = directionX * SIGN;
                 sfx.playSound("hit");
+                directionX = directionX * SIGN;
+                ballX = 0; // <-- Ajustar posición
+                ball.x = ballX;
             }
             
             if (ball.getMaxY() >= MAX_Y) {
@@ -183,12 +224,14 @@ public class BallRunner implements Runnable {
             }
 
             if (ball.getMaxX() > MAX_X) {
-                directionX = directionX * SIGN;
                 sfx.playSound("hit");
+                directionX = directionX * SIGN;
+                ballX = MAX_X - (int) ball.width; // <-- Ajustar posición al borde derecho
+                ball.x = ballX;
             }
 
-            ballX = ballX + (DX * directionX);
-            ballY = ballY + (DY * directionY);
+            ballX = ballX + (speedX * directionX);
+            ballY = ballY + (speedY * directionY);
             ball.x = ballX;
             ball.y = ballY;
 

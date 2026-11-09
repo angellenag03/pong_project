@@ -19,6 +19,7 @@ public class Paddle {
     private double baseSpeed = 8.0;
     private double sprintSpeed = 16.0;
 
+    private double currentWidth = WIDTH;
     // --- Atributos para la Textura ---
     private BufferedImage textureSheet;
     private Image texture;
@@ -72,6 +73,20 @@ public class Paddle {
         } else {
             paddle.x = MIN_X;
         }
+    }
+    
+    public void expandWidth(double newWidth) {
+        this.currentWidth = newWidth;
+        this.paddle.width = newWidth;
+        
+        // Volver al tamaño original después de 8 segundos
+        new Thread(() -> {
+            try {
+                Thread.sleep(32000);
+            } catch (InterruptedException ignored) {}
+            this.paddle.width = WIDTH;
+            this.currentWidth = WIDTH;
+        }).start();
     }
 
     public Rectangle2D.Double getPaddle() {

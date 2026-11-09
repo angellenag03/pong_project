@@ -25,7 +25,7 @@ public class Main {
         p.add(board, BorderLayout.CENTER);
 
         SFXManager sfx = SFXManager.getInstance();
-        sfx.playSong("breakout.wav");
+        sfx.playSong("breakout.wav"); // la rola de fondo pue
         f.addKeyListener( board );
         f.setContentPane(p);
         f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
